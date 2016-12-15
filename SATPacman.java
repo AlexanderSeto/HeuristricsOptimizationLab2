@@ -4,6 +4,12 @@ import org.jacop.search.*;
 import org.jacop.satwrapper.*;
 import org.jacop.jasat.utils.structures.IntVec;
 import java.lang.Math;
+import java.util.Scanner;
+import java.util.List;
+import java.util.ArrayList;
+
+import java.io.FileNotFoundException;
+import java.io.File;
 
 public class SATPacman {
     private static int n, height, width;
@@ -15,6 +21,7 @@ public class SATPacman {
 	// Precond: have maze file
 	//char[][] maze;
 
+	
 
 	char[][] char_maze = new char[][] {
 				{'%','%','%','%','%','%','%','%','%','%','%'},
@@ -25,6 +32,7 @@ public class SATPacman {
 				{'%','0','0','0','O','0','0','0','0','0','%'},
 				{'%','%','%','%','%','%','%','%','%','%','%'}};
 
+	char_maze = readMaze(fileName);
 
 	//height = 4; width = 5;
 	height = char_maze.length;
@@ -109,7 +117,7 @@ public class SATPacman {
 	addGhostsNStuff(satWrapper, ghostLiteral);
 	
 	//check for consistency
-	System.out.println(store.consistency());
+	//System.out.println(store.consistency());
 
 	Search<BooleanVar> search = new DepthFirstSearch<BooleanVar>();
 	SelectChoicePoint<BooleanVar> select = new SimpleSelect<BooleanVar>(allVariables, new SmallestDomain<BooleanVar>(), new IndomainMin<BooleanVar>());
@@ -118,7 +126,8 @@ public class SATPacman {
 
 		
 	Boolean result = search.labeling(store, select);
-	prettyPrint(char_maze, pacman, ghosts);
+	if(result)
+	    prettyPrint(char_maze, pacman, ghosts);
 
        
 	
@@ -177,9 +186,9 @@ public class SATPacman {
     }
 
     public static void addGhostsNStuff(SatWrapper satWrapper, int[][][] ghostLiteralMatrix) {
-	System.out.println("BEFORE TEST");
+	//System.out.println("BEFORE TEST");
 	for (int h = 0; h < ghostLiteralMatrix.length; h++) {
-	    System.out.println(h);
+	    //System.out.println(h);
 	    addMatrixAtLeastOne(satWrapper, ghostLiteralMatrix[h]);
 	    //addMatrixOnlyOne(satWrapper, ghostLiteralMatrix[h]);
 	}
@@ -192,7 +201,7 @@ public class SATPacman {
 		    
 		    for (int ghost_num2 = ghost_num+1; ghost_num2 < n; ghost_num2++) {
 			for( int col_num2 = 0; col_num2 < width; col_num2++) {
-			    System.out.println("G"+ghost_num+"-"+row_num+","+col_num+" --> ~G"+ghost_num2+""+row_num+""+col_num2);
+			    //System.out.println("G"+ghost_num+"-"+row_num+","+col_num+" --> ~G"+ghost_num2+""+row_num+""+col_num2);
 			    IntVec clause = new IntVec(satWrapper.pool);
 			    clause.add(-ghostLiteralMatrix[ghost_num][row_num][col_num]);
 			    clause.add(-ghostLiteralMatrix[ghost_num2][row_num][col_num2]);
@@ -219,7 +228,7 @@ public class SATPacman {
 		for (int g = 0; g < n; g++) {
 		    for (int i = -1; i <= 1; i++) {
 			for (int j = -1; j <= 1; j++) {
-			    System.out.println("P-"+p_row+","+p_col+" --> ~G"+g+"-"+Math.abs(p_row-i)%height+","+Math.abs(p_col-j)%width);
+			    //System.out.println("P-"+p_row+","+p_col+" --> ~G"+g+"-"+Math.abs(p_row-i)%height+","+Math.abs(p_col-j)%width);
 			    IntVec clause = new IntVec(satWrapper.pool);
 			    clause.add(-pacmanLiteralMatrix[p_row][p_col]);
 			    clause.add(-ghostLiteralMatrix[g][Math.abs(p_row-i)%height][Math.abs(p_col-j)%width]);
@@ -269,7 +278,6 @@ public class SATPacman {
 
 		}		    
 	    }
-	    System.out.println("asdf"+num1+"asdf"+num2);
 		
 	}
     }
@@ -296,5 +304,30 @@ public class SATPacman {
 	}
        
 	
+    }
+
+
+    public static char[][] readMaze(String fileName) {
+	ArrayList<String> mazeList = new ArrayList<String>();
+	try {
+
+	    File file = new File(fileName);
+	    Scanner scanner = new Scanner(file);
+	    while (scanner.hasNext()) {
+		String line = scanner.next();
+		//System.out.println(line);
+		mazeList.add(line);
+	    }
+	    scanner.close();
+	} catch (FileNotFoundException e) {
+	    e.printStackTrace();
+	}
+	//System.out.println(mazeList);
+	char[][] maze = new char[mazeList.size()][mazeList.get(0).length()];
+	for (int i = 0; i < mazeList.size(); i++) {
+	    maze[i] = mazeList.get(i).toCharArray();
+	}
+	
+	return maze;
     }
 }
