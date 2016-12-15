@@ -18,10 +18,6 @@ public class SATPacman {
 	String fileName = args[0];
 	n = Integer.parseInt(args[1]);
 	int counter = 0;
-	// Precond: have maze file
-	//char[][] maze;
-
-	
 
 	char[][] char_maze = new char[][] {
 				{'%','%','%','%','%','%','%','%','%','%','%'},
@@ -34,14 +30,8 @@ public class SATPacman {
 
 	char_maze = readMaze(fileName);
 
-	//height = 4; width = 5;
 	height = char_maze.length;
 	width = char_maze[0].length;
-	
-	
-	// Postcond:  have maze in array
-
-	// Do Shit 
 
 	Store store = new Store();
 	SatWrapper satWrapper = new SatWrapper();
@@ -87,29 +77,18 @@ public class SATPacman {
 
 	
 	int pacmanLiteral[][] = new int[height][width];
+	int mazeLiteral[][] = new int[height][width];
+	int ghostLiteral[][][] = new int[n][height][width];
+
 	for (int i = 0; i < height; i++) {
 	    for (int j = 0; j < width; j++) {
 		pacmanLiteral[i][j] = satWrapper.cpVarToBoolVar(pacman[i][j], 1, true);
-	    }
-	}
-
-	int ghostLiteral[][][] = new int[n][height][width];
-	for (int i = 0; i < n; i++) {
-	    for (int j = 0; j < height; j++) {
-		for (int k = 0; k < width; k++) {
-		    ghostLiteral[i][j][k] = satWrapper.cpVarToBoolVar(ghosts[i][j][k], 1, true);
+		mazeLiteral[i][j] = satWrapper.cpVarToBoolVar(maze[i][j], 1, true);
+		for (int g = 0; g < n; g++) {
+		    ghostLiteral[g][i][j] = satWrapper.cpVarToBoolVar(ghosts[g][i][j], 1, true);
 		}
 	    }
 	}
-	int mazeLiteral[][] = new int[height][width];
-	for (int i = 0; i < height; i++) {
-	    for (int j = 0; j < width; j++) {
-		//System.out.println(" "+i+","+j+"---"+maze.length+","+maze[0].length);
-		mazeLiteral[i][j] = satWrapper.cpVarToBoolVar(maze[i][j], 1, true);
-	    }
-	}
-	
-
 
 	// do stuff to pacman and ghost.
 	addWalls(satWrapper, char_maze,  mazeLiteral, pacmanLiteral, ghostLiteral);
@@ -121,16 +100,10 @@ public class SATPacman {
 
 	Search<BooleanVar> search = new DepthFirstSearch<BooleanVar>();
 	SelectChoicePoint<BooleanVar> select = new SimpleSelect<BooleanVar>(allVariables, new SmallestDomain<BooleanVar>(), new IndomainMin<BooleanVar>());
-
-
-
-		
 	Boolean result = search.labeling(store, select);
 	if(result)
 	    prettyPrint(char_maze, pacman, ghosts);
 
-       
-	
     }
     /**
      * Helper function to create a CNF clause of an entire Matrix ORed 
@@ -138,6 +111,7 @@ public class SATPacman {
      *
      * @param satWrapper   a JaCoP library wrapper for logical satisfiability problems.
      * @param litMatrix    a matrix of JaCoP literals to be ORed
+     *
      */
     public static void addMatrixAtLeastOne(SatWrapper satWrapper, int[][] litMatrix) {
 	IntVec clause = new IntVec(satWrapper.pool);
@@ -157,6 +131,7 @@ public class SATPacman {
      *
      * @param satWrapper   a JaCoP library wrapper for logical satisfiability problems.
      * @param litMatrix    a matrix of JaCoP literals to be XORed
+     *
      */
     public static void addMatrixOnlyOne(SatWrapper satWrapper, int[][] litMatrix) {
 	for(int i = 0; i < litMatrix.length; i++) {
@@ -185,20 +160,33 @@ public class SATPacman {
 	
     }
 
+    /**
+     * Function that adds the contraints regarding the ghosts. i.e. only one per row and 
+     * exactly n present, where n is passed as a parameter to the program. 
+     * It iterates through the entire grid and ensures the implication that a ghost present
+     * guarantees that there will be no ghost on the same row, for any column. 
+     *
+     * @param satWrapper          a JaCoP library wrapper for logical satisfiability problems.
+     * @param ghostLiteralMatrix  JaCoP literals for ghost indexed by [ghost #][row #][col #]
+     *
+     */
     public static void addGhostsNStuff(SatWrapper satWrapper, int[][][] ghostLiteralMatrix) {
-	//System.out.println("BEFORE TEST");
-	for (int h = 0; h < ghostLiteralMatrix.length; h++) {
-	    //System.out.println(h);
-	    addMatrixAtLeastOne(satWrapper, ghostLiteralMatrix[h]);
-	    //addMatrixOnlyOne(satWrapper, ghostLiteralMatrix[h]);
-	}
-
 	for (int ghost_num = 0; ghost_num < n; ghost_num++) {
+	    /*
+	     * Ensures that there is at least 1 ghost per ghost matrix
+	     */
+	    addMatrixAtLeastOne(satWrapper, ghostLiteralMatrix[ghost_num]);
+
+	    /*
+	     * Ensures that there is only 1 ghost per row. (will also ensure only 1 ghost max
+	     * per ghost matrix.
+	     */
 	    for (int row_num = 0; row_num < height; row_num++) {
 		for (int col_num = 0; col_num < width; col_num++) {
 
-
-		    
+		    /*
+		     * We set ghost_num2 to ghost_num+1 to avoid duplicate entries
+		     */
 		    for (int ghost_num2 = ghost_num+1; ghost_num2 < n; ghost_num2++) {
 			for( int col_num2 = 0; col_num2 < width; col_num2++) {
 			    //System.out.println("G"+ghost_num+"-"+row_num+","+col_num+" --> ~G"+ghost_num2+""+row_num+""+col_num2);
@@ -208,24 +196,33 @@ public class SATPacman {
 			    satWrapper.addModelClause(clause.toArray());	
 
 			}
-						    
 		    }
-		    
 		}
 	    }
-	}
-
-	
+	}	
     }
 
     public static void addPacman(SatWrapper satWrapper, int[][] pacmanLiteralMatrix, int[][][] ghostLiteralMatrix) {
+
+	/*
+	 * Ensure at least 1 pacman and at most 1 pacman, i.e. exactly 1 pacman.
+	 */
 	addMatrixAtLeastOne(satWrapper, pacmanLiteralMatrix);
 	addMatrixOnlyOne(satWrapper, pacmanLiteralMatrix);
 
+	/*
+	 * Ensures pacman is not surrounded by ghosts
+	 */
 	for (int p_row = 0; p_row < height; p_row++) {
 	    for (int p_col = 0; p_col < width; p_col++) {
 
+		/*
+		 * Check all ghosts
+		 */
 		for (int g = 0; g < n; g++) {
+		    /*
+		     * Check 3x3 grid around using abs values
+		     */
 		    for (int i = -1; i <= 1; i++) {
 			for (int j = -1; j <= 1; j++) {
 			    //System.out.println("P-"+p_row+","+p_col+" --> ~G"+g+"-"+Math.abs(p_row-i)%height+","+Math.abs(p_col-j)%width);
@@ -248,37 +245,29 @@ public class SATPacman {
 
 
     public static void addWalls(SatWrapper satWrapper, char[][] maze, int[][] mLitMatrix, int[][] pLitMatrix, int[][][] gLitMatrix) {
-	int num1 = 0, num2 = 0;
-
 	for (int row = 0; row < height; row++) {
 	    for (int col = 0; col < width; col++) {
+
 		IntVec clause = new IntVec(satWrapper.pool);
 		if (maze[row][col] == '%' ||  maze[row][col] == 'O') {
 		    clause.add(mLitMatrix[row][col]);
-		    num1++;
 		} else {
 		    clause.add(-mLitMatrix[row][col]);
-		    num2++;
 		}
 		satWrapper.addModelClause(clause.toArray());
-
+		
 		clause = new IntVec(satWrapper.pool);
 		clause.add(-mLitMatrix[row][col]);
 		clause.add(-pLitMatrix[row][col]);
 		satWrapper.addModelClause(clause.toArray());
 
-
 		for (int g = 0; g < n; g++ ) {
 		    clause = new IntVec(satWrapper.pool);
 		    clause.add(-mLitMatrix[row][col]);
 		    clause.add(-gLitMatrix[g][row][col]);
-				
-
 		    satWrapper.addModelClause(clause.toArray());
-
 		}		    
 	    }
-		
 	}
     }
 
@@ -292,42 +281,33 @@ public class SATPacman {
 			maze[row][col] = 'G';
 		    }
 		}
-		if (maze[row][col] == '0')
+		if (maze[row][col] == '0') {
 		    System.out.print(' ');
-		else
+		} else {
 		    System.out.print(maze[row][col]);
-					     
+		}
 	    }
 	    System.out.println();
-			
-	    
-	}
-       
-	
+	}	
     }
-
 
     public static char[][] readMaze(String fileName) {
 	ArrayList<String> mazeList = new ArrayList<String>();
 	try {
-
 	    File file = new File(fileName);
 	    Scanner scanner = new Scanner(file);
 	    while (scanner.hasNext()) {
 		String line = scanner.next();
-		//System.out.println(line);
 		mazeList.add(line);
 	    }
 	    scanner.close();
 	} catch (FileNotFoundException e) {
 	    e.printStackTrace();
 	}
-	//System.out.println(mazeList);
 	char[][] maze = new char[mazeList.size()][mazeList.get(0).length()];
 	for (int i = 0; i < mazeList.size(); i++) {
 	    maze[i] = mazeList.get(i).toCharArray();
 	}
-	
 	return maze;
     }
 }
