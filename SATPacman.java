@@ -118,7 +118,7 @@ public class SATPacman {
 
 		
 	Boolean result = search.labeling(store, select);
-
+	prettyPrint(char_maze, pacman, ghosts);
 
        
 	
@@ -201,10 +201,6 @@ public class SATPacman {
 			}
 						    
 		    }
-
-
-
-
 		    
 		}
 	    }
@@ -277,5 +273,28 @@ public class SATPacman {
 		
 	}
     }
-    
+
+    public static void prettyPrint(char[][] maze, BooleanVar[][] pMatrix, BooleanVar[][][] gMatrix) {
+	for (int row = 0; row < height; row++) {
+	    for (int col = 0; col < width; col++) {
+	        if(pMatrix[row][col].dom().max == 1)
+		    maze[row][col] = 'P';
+		for (int g = 0; g < n; g++) {
+		    if (gMatrix[g][row][col].dom().max == 1) {
+			maze[row][col] = 'G';
+		    }
+		}
+		if (maze[row][col] == '0')
+		    System.out.print(' ');
+		else
+		    System.out.print(maze[row][col]);
+					     
+	    }
+	    System.out.println();
+			
+	    
+	}
+       
+	
+    }
 }
