@@ -99,7 +99,10 @@ public class SATPacman {
 	//System.out.println(store.consistency());
 
 	Search<BooleanVar> search = new DepthFirstSearch<BooleanVar>();
-	SelectChoicePoint<BooleanVar> select = new SimpleSelect<BooleanVar>(allVariables, new SmallestDomain<BooleanVar>(), new IndomainMin<BooleanVar>());
+	SelectChoicePoint<BooleanVar> select = new SimpleSelect<BooleanVar>(allVariables,
+									    new SmallestDomain<BooleanVar>(),
+									    new IndomainMin<BooleanVar>());
+	
 	Boolean result = search.labeling(store, select);
 	if(result)
 	    prettyPrint(char_maze, pacman, ghosts);

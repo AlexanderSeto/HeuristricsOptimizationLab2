@@ -28,10 +28,17 @@ public class SATPacman {
 	height = char_maze.length;
 	width = char_maze[0].length;
 	
-	int[][] maze= parseMaze(char_maze);
+	int[][] maze = parseMaze(char_maze);
 	
+	//iterate to find all ghosts, add to p-Q
+	for (int i = 0; i < height; i++) {
+	    for (int j = 0; j < width; j++) {
+		
+	    }
+	}
 
 
+	
     	  
     }
 
