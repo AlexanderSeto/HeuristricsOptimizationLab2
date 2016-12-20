@@ -110,16 +110,14 @@ public class AstarPacman {
 		}
 		closed[current.p.x][current.p.y] = true;
     
-		//open.remove();
-		//maze[current.p.x][current.p.y] ^= VISITED;
-		//System.out.println(t.toString());
 		System.out.println("remain:"+open.size());
 		System.out.println("CURRENT"+ current.toString());
 		System.out.println("C_COST " + current.finalCost);
 		System.out.println(new Tile(closest));
 		
-		Tile t = new Tile(current.p);
 		if (current.p.x > 0 && !closed[current.p.x-1][current.p.y]) {
+		    Tile t = new Tile(current.p);
+
 		    t.p.x = current.p.x-1;
 		    t.p.y = current.p.y;
 		    t.heuristicCost = getF(t.p, closest);
@@ -135,6 +133,8 @@ public class AstarPacman {
 
 		}
 		if (current.p.x < (height - 1) && !closed[current.p.x+1][current.p.y]) {
+		    Tile t = new Tile(current.p);
+		    
 		    t.p.x = current.p.x+1;
 		    t.p.y = current.p.y;
 		    t.heuristicCost = getF(t.p, closest);
@@ -151,6 +151,8 @@ public class AstarPacman {
 				    
 		}
 		if (current.p.y > 0 &&  !closed[current.p.x][current.p.y-1]) {
+		    Tile t = new Tile(current.p);
+
 		    t.p.x = current.p.x;
 		    t.p.y = current.p.y-1;
 		    t.heuristicCost = getF(t.p, closest);
@@ -165,12 +167,14 @@ public class AstarPacman {
 				    
 		}
 		if (current.p.y < (width - 1) &&  !closed[current.p.x][current.p.y+1]) {
+		    Tile t = new Tile(current.p);
+
 		    t.p.x = current.p.x;
 		    t.p.y = current.p.y+1;
 		    t.heuristicCost = getF(t.p, closest);
 		    if ((maze[t.p.x][t.p.y]&CAPSULE) != 0)
 			t.finalCost = current.finalCost - current.heuristicCost + t.heuristicCost + 2;
-		    else if ((maze[t.p.x][t.p.y]&WALL) != 0)
+		    else if ((maze[t.p.x][t.p.y]&EMPTY) != 0)
 			t.finalCost = 100000;
 		    else
 			t.finalCost = current.finalCost - current.heuristicCost + t.heuristicCost + 4;
