@@ -76,6 +76,7 @@ public class AstarPacman {
 	    }
 	    // Perform ASTAR
 
+	    /*
 	    PriorityQueue<Tile> open = new PriorityQueue<Tile>((Tile a, Tile b) ->{
 		    if (a.finalCost < b.finalCost) {
 			return -1;
@@ -85,6 +86,10 @@ public class AstarPacman {
 			return 0;
 		    }
 		});
+	    */
+	    PriorityQueue<Tile> open = new PriorityQueue<Tile>((Tile a, Tile b) -> a.finalCost-b.finalCost);
+
+	    
 	    boolean[][] closed = new boolean[height][width];
 	    
 	    Tile firstTile = new Tile(pacman);
