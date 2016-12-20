@@ -8,8 +8,11 @@ import java.util.Scanner;
 import java.util.List;
 import java.util.ArrayList;
 
-import java.io.FileNotFoundException;
 import java.io.File;
+import java.io.FileWriter;
+import java.io.FileNotFoundException;
+import java.io.FileNotFoundException;
+
 
 public class SATPacman {
     private static int n, height, width;
@@ -19,6 +22,7 @@ public class SATPacman {
 	n = Integer.parseInt(args[1]);
 	int counter = 0;
 
+	/*
 	char[][] char_maze = new char[][] {
 				{'%','%','%','%','%','%','%','%','%','%','%'},
 				{'%','0','0','0','0','0','0','0','0','0','%'},
@@ -27,8 +31,9 @@ public class SATPacman {
 				{'%','0','0','0','0','0','O','0','0','0','%'},
 				{'%','0','0','0','O','0','0','0','0','0','%'},
 				{'%','%','%','%','%','%','%','%','%','%','%'}};
+	*/
 
-	char_maze = readMaze(fileName);
+	char[][] char_maze = readMaze(fileName);
 
 	height = char_maze.length;
 	width = char_maze[0].length;
@@ -105,7 +110,8 @@ public class SATPacman {
 	
 	Boolean result = search.labeling(store, select);
 	if(result)
-	    prettyPrint(char_maze, pacman, ghosts);
+	    prettyPrintToFile(char_maze, pacman, ghosts, fileName);
+	//prettyPrint(char_maze, pacman, ghosts);
 
     }
     /**
@@ -252,7 +258,7 @@ public class SATPacman {
 	    for (int col = 0; col < width; col++) {
 
 		IntVec clause = new IntVec(satWrapper.pool);
-		if (maze[row][col] == '%' ||  maze[row][col] == 'O') {
+		if (maze[row][col] == '%' || maze[row][col] == 'O') {
 		    clause.add(mLitMatrix[row][col]);
 		} else {
 		    clause.add(-mLitMatrix[row][col]);
@@ -294,13 +300,52 @@ public class SATPacman {
 	}	
     }
 
+    public static void prettyPrintToFile(char[][] maze, BooleanVar[][] pMatrix, BooleanVar[][][] gMatrix, String fileName) {
+	fileName += ".output";
+	File file = new File(fileName);
+	try{
+	    FileWriter fw = new FileWriter(file);
+	    
+	    for (int row = 0; row < height; row++) {
+		for (int col = 0; col < width; col++) {
+		    if(pMatrix[row][col].dom().max == 1)
+			maze[row][col] = 'P';
+		    for (int g = 0; g < n; g++) {
+			if (gMatrix[g][row][col].dom().max == 1) {
+			    maze[row][col] = 'G';
+			}
+		    }
+		    fw.write(maze[row][col]);
+		}
+		fw.write('\n');
+	    }
+	    fw.close();
+		
+	}
+	catch (Exception e) {
+	    e.printStackTrace();
+	}
+     }
+    
     public static char[][] readMaze(String fileName) {
 	ArrayList<String> mazeList = new ArrayList<String>();
 	try {
 	    File file = new File(fileName);
-	    Scanner scanner = new Scanner(file);
+
+	    /*
+	     * Funny story, this. I spent about 1 hour figuring out that I needed to call a new 
+	     * Scanner with the .useDelimiter("\n"), method. This was due to the lack of internet
+	     * at cruising altitude in a 787 Dreamliner. It was especially difficult because I did
+	     * not know where to find the java documention offline. I had to use man to figure out
+	     * the find command. Then I had to use find to find java. Then I had to find the source 
+	     * files. But I only found the compiled class files. THEN I found the .java files. Then,
+	     * I realized it wouldn't match a single character delimiter, only a string.  THIS TOOK
+	     * AGES!!!
+	     */
+	    Scanner scanner = new Scanner(file).useDelimiter("\n");
 	    while (scanner.hasNext()) {
 		String line = scanner.next();
+		//System.out.println(line);
 		mazeList.add(line);
 	    }
 	    scanner.close();
